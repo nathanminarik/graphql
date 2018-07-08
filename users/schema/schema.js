@@ -2,11 +2,12 @@ const graphql = require('graphql');
 const axios = require('axios');
 
 const {
-  GraphQLObjectType,
-  GraphQLString,
   GraphQLInt,
+  GraphQLList,
+  GraphQLNonNull,
+  GraphQLObjectType,
   GraphQLSchema,
-  GraphQLList
+  GraphQLString
 } = graphql;
 
 // The order of definition is important. 
@@ -89,7 +90,7 @@ const RootQuery = new GraphQLObjectType ({
     company: {
       type: CompanyType,
       args: {
-        id: { type: GraphQLString }
+        id: { type: new GraphQLNonNull(GraphQLString) }
       },
       resolve (parentValue, args) {
         return axios.get(`http://localhost:3000/companies/${args.id}`)
@@ -99,9 +100,59 @@ const RootQuery = new GraphQLObjectType ({
   }
 });
 
+const mutation = new GraphQLObjectType({
+  name: 'Mutation',
+  // The fields of a mutation describe what the mutation will do
+  fields: {
+    addUser: {
+      // The type refers to the type of data that resolve function will eventually return.
+      // Sometimes a collection of data you're operating on and the type you return might not be the same.
+      type: UserType,
+      args: {
+        firstName: { type: new GraphQLNonNull(GraphQLString) },
+        age: { type: new GraphQLNonNull(GraphQLInt) },
+        companyId: { type: GraphQLString }
+      },
+      resolve (parentValue, { firstName, age }) {
+        console.log(arguments[1]);
+        return axios.post('http://localhost:3000/users', { firstName, age })
+          .then(({ data }) => data);
+      }
+    },
+    deleteUser: {
+      // We always have to say we will get something back.
+      // Even though in this instance nothing will be returned because JSON server doesn't allow for that.
+      // There is no way to tell graphQl to nor expect anything back.
+      type: UserType,
+      args: {
+        id: { type: new GraphQLNonNull(GraphQLString) }
+      },
+      resolve (parentValue, { id }) {
+        return axios.delete(`http://localhost:3000/users/${id}`)
+          .then(({data}) => data);
+      }
+    },
+    editUser: {
+      type: UserType,
+      args: {
+        id: { type: new GraphQLNonNull(GraphQLString) },
+        firstName: { type: GraphQLString },
+        age: { type: GraphQLInt },
+        companyId: { type: GraphQLString },
+      },
+      // Since graphQL will only add the keys if they are present in the args object the user provides 
+      resolve (parentValue, args) {
+        return axios.patch(`http://localhost:3000/users/${args.id}`, args)
+          .then(({data}) => data);
+      }
+    }
+  }
+});
+
 module.exports = new GraphQLSchema({
-  query: RootQuery
-})
+  query: RootQuery,
+  mutation
+});
 
 
 // Sample query
@@ -117,5 +168,43 @@ module.exports = new GraphQLSchema({
 //         description
 //       }
 //     }
+//   },
+//   if we want to have two company queries we can name them:
+//   apple: company(id: "1") {
+//     name,
+//     description
+//   },
+//     google: company(id: "2") {
+//     name,
+//     description
+//   }
+// }
+
+// to avoid repeating the fields in the repeated companies.
+// We can wrte a fragment.
+// By adding the on {name} it allows graphQL to type check and make sure
+// that we're trying to pull out.
+
+// query {
+//   apple: company(id: "1") {
+//     ...companyDetails
+//   }
+//   google: company(id: "2") {
+//     ...companyDetails
+//   }
+// }
+
+// fragment companyDetails on Company {
+//   id
+//   name
+//   description
+// }
+
+// // We must ask for some properties for what's returned from the resolve function.
+// mutation {
+//   addUser(firstName: "Steven", age: 26) {
+//     id,
+//     age,
+//     firstName
 //   }
 // }

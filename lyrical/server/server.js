@@ -9,8 +9,6 @@ const app = express();
 
 // Replace with your mongoLab URI
 const MONGO_URI = 'mongodb://localhost:27017/lyrics';
-const a = 2;
-// This is a test
 if (!MONGO_URI) {
   throw new Error('You must provide a MongoLab URI');
 }

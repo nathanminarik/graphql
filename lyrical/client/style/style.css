@@ -1,0 +1,13 @@
+.collection-item {
+    display: flex;
+    justify-content: space-between;
+}
+
+.vote-box {
+    align-items: center;
+    display: flex;
+}
+
+.material-icons {
+    margin-right: 5px;
+}

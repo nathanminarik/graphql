@@ -43,7 +43,7 @@ const UserType = new GraphQLObjectType({
     id: { type: GraphQLString },
     firstName: { type: GraphQLString },
     age: { type: GraphQLInt },
-    // We treat assotiations between types (companies and users in this instance)
+    // We treat associations between types (companies and users in this instance)
     // the exact same way as if it were another field
     // Company is different from the user object since we have companyId as the field in the actual data
     // We therefore need to use the resolve function to populate the data.
